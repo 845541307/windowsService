@@ -25,6 +25,7 @@
     <ClCompile Include="user_tracker_service.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="def.h" />
     <ClInclude Include="service_base.h" />
     <ClInclude Include="service_installer.h" />
     <ClInclude Include="user_tracker_service.h" />

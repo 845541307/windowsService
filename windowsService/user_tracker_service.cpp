@@ -1,15 +1,47 @@
 ﻿#include "user_tracker_service.h"
-
+#include "def.h"
 #include <WtsApi32.h>
 
 #pragma comment(lib, "Wtsapi32.lib")
 
+
+BOOL UserTrackerService::DoRegisterDeviceInterface(
+	IN GUID InterfaceClassGuid,
+	IN HANDLE hSev,
+	OUT HDEVNOTIFY *hDeviceNotify
+)
+{
+	DEV_BROADCAST_DEVICEINTERFACE NotificationFilter;
+
+	ZeroMemory(&NotificationFilter, sizeof(NotificationFilter));
+	NotificationFilter.dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE);
+	NotificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+	NotificationFilter.dbcc_classguid = InterfaceClassGuid;
+
+	*hDeviceNotify = RegisterDeviceNotification(
+		hSev,                       // events recipient
+		&NotificationFilter,        // type of device
+		DEVICE_NOTIFY_SERVICE_HANDLE // type of recipient handle
+	);
+
+	if (NULL == *hDeviceNotify)
+	{
+		WriteToEventLog(_T("RegisterDeviceNotification file"), EVENTLOG_ERROR_TYPE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL UserTrackerService::DoUnregisterDeviceNotification(HDEVNOTIFY Handle)
+{
+	return UnregisterDeviceNotification(Handle);
+}
+
 bool UserTrackerService::OnInit(DWORD argc, TCHAR* argv[])
 {
-	bool bSuccess = true;
-	
+	bool bSuccess = true;	
 	bSuccess = bSuccess && (NULL != (m_hStopEvent = CreateEvent(NULL, FALSE, FALSE, NULL)));
-
 	return bSuccess;
 }
 
@@ -23,8 +55,19 @@ void UserTrackerService::OnStart() {
   if (!m_logFile.is_open()) {
     WriteToEventLog(_T("Can't open log file"), EVENTLOG_ERROR_TYPE);
   }
+  
+  bool bSuccess = true;
+  ServiceHandle svcControlManager = ::OpenSCManager(NULL, NULL,
+	  SC_MANAGER_ALL_ACCESS);
 
+  bSuccess = (nullptr != svcControlManager);
+
+  bSuccess = bSuccess && DoRegisterDeviceInterface(GUID_DEVINTERFACE_VOLUME, GetServiceStatusHandle(), &m_hDeviceNotify);
+
+  bSuccess = (NULL != m_hDeviceNotify);
   WaitForSingleObject(m_hStopEvent, INFINITE);
+
+  bSuccess = bSuccess && DoUnregisterDeviceNotification(m_hDeviceNotify);
 }
 
 void UserTrackerService::OnStop() {
@@ -102,6 +145,16 @@ void UserTrackerService::OnSessionChange(DWORD evtType,
   if (m_logFile.is_open()) {
     m_logFile << message.GetString() << std::endl;
   }
+}
+
+void UserTrackerService::OnDeviceChange(DWORD evtType, DEV_BROADCAST_HDR* devData)
+{
+	switch (evtType)
+	{
+	case DBT_DEVICEARRIVAL:
+		int a = 1;
+		break;
+	}
 }
 
 void UserTrackerService::OnCustomHandle(DWORD eventId)

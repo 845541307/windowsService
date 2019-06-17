@@ -3,6 +3,7 @@
 
 #include <windows.h>
 #include <atlstr.h>
+#include <dbt.h>
 
 // Base Service class used to create windows services.
 class ServiceBase {
@@ -29,6 +30,8 @@ class ServiceBase {
   // Account info service runs under.
   const CString& GetAccount() const { return m_account; }
   const CString& GetPassword() const { return m_password; }
+
+  const SERVICE_STATUS_HANDLE GetServiceStatusHandle() { return m_svcStatusHandle; }
  protected:
 	 ServiceBase(const CString& name,
 		 const CString& displayName,
@@ -57,6 +60,8 @@ class ServiceBase {
 
   virtual void OnSessionChange(DWORD /*evtType*/,
                                WTSSESSION_NOTIFICATION* /*notification*/) {}
+  virtual void OnDeviceChange(DWORD /*evtType*/,
+							  DEV_BROADCAST_HDR* /*devData*/) {}
  private:
   // Registers handle and starts the service.
   static void WINAPI SvcMain(DWORD argc, TCHAR* argv[]);

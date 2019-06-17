@@ -69,7 +69,7 @@ void ServiceBase::WriteToEventLog(const CString& msg, WORD type) {
 void WINAPI ServiceBase::SvcMain(DWORD argc, TCHAR* argv[]) {
   assert(m_service);
 
-  Sleep(20 * 1000);
+  Sleep(10 * 1000);
   m_service->m_svcStatusHandle = ::RegisterServiceCtrlHandlerEx(m_service->GetName(),
                                                                 ServiceCtrlHandler, NULL);
   if (!m_service->m_svcStatusHandle) {
@@ -109,6 +109,14 @@ DWORD WINAPI ServiceBase::ServiceCtrlHandler(DWORD ctrlCode, DWORD evtType,
     case SERVICE_CONTROL_SESSIONCHANGE:
       m_service->OnSessionChange(evtType, reinterpret_cast<WTSSESSION_NOTIFICATION*>(evtData));
     break;
+
+	case SERVICE_CONTROL_DEVICEEVENT:
+		m_service->OnDeviceChange(evtType, reinterpret_cast<DEV_BROADCAST_HDR*>(evtData));
+	break;
+
+	case SERVICE_CONTROL_INTERROGATE:
+		m_service->SetStatus(m_service->m_svcStatus.dwCurrentState);
+	break;
 
     default:
 		if (128 <= ctrlCode && 255 >= ctrlCode)

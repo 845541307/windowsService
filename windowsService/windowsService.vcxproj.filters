@@ -38,5 +38,8 @@
     <ClInclude Include="user_tracker_service.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="def.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
