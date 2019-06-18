@@ -67,6 +67,7 @@ void UserTrackerService::OnStart() {
   bSuccess = (NULL != m_hDeviceNotify);
   WaitForSingleObject(m_hStopEvent, INFINITE);
 
+  //end all threads, call service stop status to SCM
   bSuccess = bSuccess && DoUnregisterDeviceNotification(m_hDeviceNotify);
 }
 
